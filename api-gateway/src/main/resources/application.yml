@@ -1,0 +1,28 @@
+# Я пытался сделать через config, как и user-service и company-service,
+# но по какой-то причине у меня gateway не работает так
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: company-service
+          uri: lb://COMPANY-SERVICE
+          predicates:
+            - Path=/api/companies/**
+        - id: user-service
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/api/users/**
+
+eureka:
+  instance:
+    hostname: api-gateway
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/

@@ -1,0 +1,30 @@
+server:
+  port: 8761
+
+spring:
+  application:
+    name: eureka-server
+
+eureka:
+  instance:
+    hostname: eureka-server
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+    service-url:
+      default-zone: http://eureka-server:8761/eureka/
+
+logging:
+  level:
+    root: INFO
+    org:
+      springframework:
+        cloud: INFO
+        web: INFO
+      hibernate: WARN
+    com:
+      netflix:
+        eureka: OFF
+        discovery: OFF
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} | %-5level | %-20logger{20} | %msg%n"
