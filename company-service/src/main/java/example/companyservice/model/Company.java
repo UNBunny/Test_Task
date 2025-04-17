@@ -30,5 +30,4 @@ public class Company {
     @CollectionTable(name = "company_employees", joinColumns = @JoinColumn(name = "company_id"))
     @Column(name = "user_id")
     private Set<Long> employeeIds = new HashSet<>();
-
 }

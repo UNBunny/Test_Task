@@ -28,6 +28,7 @@ services:
     networks:
       - network
 
+
   eureka-server:
     build: ./eureka-server
     container_name: eureka-server
