@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.Map;
 import java.util.Set;
 
-@FeignClient(name = "user-service", url = "http://localhost:8881")
+@FeignClient(name = "user-service", url = "http://user-service:8881")
 public interface UserClient {
     @GetMapping("/api/users/{id}")
     UserResponse findByIdWithCompany(@PathVariable("id") Long id);
