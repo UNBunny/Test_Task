@@ -14,11 +14,14 @@ import example.companyservice.repository.CompanyRepository;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -26,12 +29,12 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Transactional
 public class CompanyServiceImpl implements CompanyService {
 
     private final CompanyRepository companyRepository;
     private final UserClient userClient;
     private final CompanyMapper companyMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
 
     @Override
@@ -58,7 +61,7 @@ public class CompanyServiceImpl implements CompanyService {
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public CompanyResponse createCompany(CompanyRequest request) {
         log.debug("Creating new company: {}", request.getName());
 
@@ -74,32 +77,38 @@ public class CompanyServiceImpl implements CompanyService {
                     throw new UserNotFoundException(employeeId);
                 }
             }
-
             company.setEmployeeIds(request.getEmployeeIds());
         }
 
         company = companyRepository.save(company);
 
-        // Обновляем список пользователей, добавляя им новую компанию
+        // Публикуем событие вместо синхронного вызова
         if (request.getEmployeeIds() != null && !request.getEmployeeIds().isEmpty()) {
-            for (Long employeeId : request.getEmployeeIds()) {
-                try {
-                    userClient.addCompanyToUser(company.getId(), employeeId);
-                } catch (FeignException e) {
-                    log.error("Failed to add employee {} to company {}: {}", employeeId, company.getId(), e.getMessage());
-                    throw new RuntimeException("Failed to add employee to company", e);
-                }
-            }
+            eventPublisher.publishEvent(new CompanyCreatedEvent(company.getId(), request.getEmployeeIds()));
         }
 
         List<UserResponse> employees = fetchEmployeesForCompany(company.getEmployeeIds());
-
         CompanyResponse response = companyMapper.toResponse(company, employees);
         log.info("Created new company with id: {}", company.getId());
         return response;
     }
 
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void handleCompanyCreatedEvent(CompanyCreatedEvent event) {
+        if (event.employeeIds() == null || event.employeeIds().isEmpty()) {
+            return;
+        }
 
+        for (Long employeeId : event.employeeIds()) {
+            try {
+                userClient.addCompanyToUser(event.companyId(), employeeId);
+                log.info("Successfully added company {} to user {}", event.companyId(), employeeId);
+            } catch (FeignException e) {
+                log.error("Failed to add company {} to user {}", event.companyId(), employeeId, e);
+                // Можно добавить дополнительную логику обработки ошибок, например, отложенную попытку
+            }
+        }
+    }
     @Override
     @Transactional
     public CompanyResponse updateCompany(Long id, CompanyRequest request) {
@@ -248,4 +257,5 @@ public class CompanyServiceImpl implements CompanyService {
             throw e;
         }
     }
+    public record CompanyCreatedEvent(Long companyId, Set<Long> employeeIds) {}
 }
