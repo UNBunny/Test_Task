@@ -105,7 +105,7 @@ public class CompanyServiceImpl implements CompanyService {
                 log.info("Successfully added company {} to user {}", event.companyId(), employeeId);
             } catch (FeignException e) {
                 log.error("Failed to add company {} to user {}", event.companyId(), employeeId, e);
-                // Можно добавить дополнительную логику обработки ошибок, например, отложенную попытку
+
             }
         }
     }
