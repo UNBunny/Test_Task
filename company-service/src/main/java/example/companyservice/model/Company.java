@@ -14,7 +14,8 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-@Builder
+@Builder(toBuilder = true)
+
 public class Company {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
