@@ -1,21 +1,26 @@
 package example.companyservice.dto;
 
-import example.companyservice.model.Company;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
-import lombok.Builder;
+import jakarta.validation.constraints.Size;
+import lombok.*;
 
-import java.util.HashSet;
 import java.util.Set;
 
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 @Builder
-public record CompanyRequest(
-        @NotBlank(message = "Name is required") String name,
-        @Positive Long budget,
-        Set<Long> employeeIds
-) {
-    public Company toEntity() {
-        return new Company(null, name, budget, employeeIds != null ? employeeIds : new HashSet<>());
-    }
+public class CompanyRequest {
+
+    @NotBlank(message = "Name is required")
+    @Size(max = 50, message = "Company name must be less than 50 characters")
+    private String name;
+
+    @Positive
+    private Long budget;
+
+    private Set<Long> employeeIds;
 }
 

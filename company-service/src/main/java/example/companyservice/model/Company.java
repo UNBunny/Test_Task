@@ -14,7 +14,8 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-@Builder
+@Builder(toBuilder = true)
+
 public class Company {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -30,5 +31,4 @@ public class Company {
     @CollectionTable(name = "company_employees", joinColumns = @JoinColumn(name = "company_id"))
     @Column(name = "user_id")
     private Set<Long> employeeIds = new HashSet<>();
-
 }
